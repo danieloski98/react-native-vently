@@ -1,10 +1,10 @@
 import React, { Component } from 'react'
-import {View, Text, TextInput, Image, StyleSheet, Button, TouchableHighlight, ActivityIndicator,
-ScrollView} from 'react-native'
+import {View, Text, TextInput, Image, StyleSheet, TouchableHighlight, ActivityIndicator,
+ScrollView, Modal, Alert} from 'react-native'
 import Icon from "react-native-vector-icons/Ionicons";
-import CheckBox from 'react-native-check-box'
+import ValidationComponent from 'react-native-form-validator';
 
-export default class Login extends Component {
+export default class Login extends ValidationComponent {
 
     constructor(props){
         super(props);
@@ -13,24 +13,18 @@ export default class Login extends Component {
             fullname: "",
             email: '',
             password: '',
-            canSubmit: null,
             submitting: false,
             passwordVisible: true,
+            error: false,
+            editable: true,
         };
+        this.makeRequest.bind(this);
+        this._submit.bind(this);
     }
 
     componentDidMount() {
-        this.setState({
-            canSubmit: false,
-        });
     }
 
-    _submit = () => {
-        this.setState((state, props) => ({
-            canSubmit: !state.canSubmit,
-            submitting: !state.submitting
-        }))
-    }
 
     togglePasswordVisibilty(){
         this.setState((state, props) => ({
@@ -38,9 +32,87 @@ export default class Login extends Component {
         }));
     }
 
+    updateEmail(e) {
+        this.setState({
+            email: e,
+        })
+    }
+
+    password(e){
+        this.setState({
+            password: e
+        });
+    }
+
+    async makeRequest() {
+      try {
+        
+        let payload = {
+            Email: this.state.email,
+            Password: this.state.password
+        }
+        console.log(payload)
+
+        let response = await fetch("https://api.vent.ly/api/v1/auth/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload),
+        });
+
+        switch(response.status) {
+            case 200: {
+                console.log("Making requesttttsssghg");
+                let body = await response.json();
+                console.log(body);
+                this.setState({
+                    submitting: false
+                });
+                this.props.navigation.navigate("Dashboard");
+                break;
+            }
+            case 500: {
+                console.log("errort");
+
+                this.setState({
+                    submitting: false
+                });
+                Alert.alert("An error occured", "Try again later")
+            }
+        }
+
+      } catch (error) {
+        Alert.alert("Network slow")
+      }
+    }
+
+    _submit(){
+
+       this.setState({
+           submitting: true
+       });
+
+        this.validate({
+            email: {required: true, email: true},
+            password: {required: true, minlength: 8}
+        });
+
+        if(!this.isFormValid()){
+            this.setState({
+                submitting: false
+            });
+            Alert.alert("Please fill the form correctly")
+        }else {
+            
+            this.makeRequest();
+        }
+    }
+
     render() {
         return (
             <ScrollView style={{ flex:1, backgroundColor: "white" }}>
+
 
                     <View style={{paddingLeft: 20, paddingRight: 20 }}>
 
@@ -61,19 +133,21 @@ export default class Login extends Component {
                             <Text style={{ marginTop: 20}}>Email</Text>
                             <View style={{ flexDirection: "row", marginTop: 10}}>
                                 <Icon style={{ position: "absolute", zIndex: 10, marginTop: 15, marginLeft: 10}} name="md-mail" color="#ABABAB" size={25}/>
-                                <TextInput style={style.input} />
+                                <TextInput editable={this.state.editable} style={style.input} onChangeText={(email) => this.updateEmail(email)} />
                             </View>
+                            {this.isFieldInError('email') && this.getErrorsInField('email').map((errorMessage, index) => <Text key={index} style={style.errorText}>{errorMessage}</Text>) }
                         </View>
 
                         <View>
                             <Text style={{ marginTop: 20}}>Password</Text>
                             <View style={{ flexDirection: "row", marginTop: 10}}>
                                 <Icon style={{ position: "absolute", zIndex: 10, marginTop: 12, marginLeft: 10}} name="md-lock" color="#ABABAB" size={25}/>
-                                <TextInput secureTextEntry={this.state.passwordVisible} style={style.input} />
+                                <TextInput onChangeText={(password) => this.password(password)} editable={this.state.editable} secureTextEntry={this.state.passwordVisible} style={style.input} />
 
                                 {this.state.passwordVisible ? <Icon onPress={() => this.togglePasswordVisibilty() } style={style.eyeIocn} name="md-eye" color="#ABABAB" size={25}/> : <Icon onPress={() => this.togglePasswordVisibilty() } style={style.eyeIocn} name="md-eye-off" color="#ABABAB" size={25}/>}
 
                             </View>
+                            {this.isFieldInError('password') && this.getErrorsInField('password').map((errorMessage, index) => <Text key={index} style={style.errorText}>{errorMessage}</Text>) }
                         </View>
                     
 
@@ -85,11 +159,15 @@ export default class Login extends Component {
                         </TouchableHighlight>
                     </View>
 
+                    <View style={{ flexDirection: "row", justifyContent: "center", }}>
+                        <Text onPress={() => this.props.navigation.navigate("resetpassword")} style={{ color: "#E61648", paddingLeft: 10,  textDecorationLine: "underline",  marginTop: 15}}>Forgot Password?</Text>
+                    </View>
+
                     <View style={{ flexDirection: "row", justifyContent: "center", paddingBottom: 20, marginTop: 10 }}>
-                        <Text style={{ textAlign:"center", marginTop: 30}} onPress={() => {}}>
+                        <Text style={{ textAlign:"center", marginTop: 10}} onPress={() => {}}>
                             Don't have an account? 
                         </Text>
-                        <Text onPress={() => this.props.navigation.navigate("Signup")} style={{ color: "#E61648", paddingLeft: 10, fontSize: 18, marginTop: 27, fontWeight: "bold"}}>Sign up</Text>
+                        <Text onPress={() => this.props.navigation.navigate("Signup")} style={{ color: "#E61648", paddingLeft: 5, marginTop: 10}}>Sign up</Text>
                     </View>
 
                     </View>
@@ -132,5 +210,8 @@ const style = StyleSheet.create({
         zIndex: 10, 
         marginTop: 15, 
         marginLeft: 10
+    },
+    errorText: {
+        color: "red"
     }
 });

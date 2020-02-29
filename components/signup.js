@@ -1,10 +1,13 @@
 import React, { Component } from 'react'
-import {View, Text, TextInput, Image, StyleSheet, Button, TouchableHighlight, ActivityIndicator, ScrollView } from 'react-native'
+import {View, Text, TextInput, Image, StyleSheet, Button, TouchableHighlight, ActivityIndicator, ScrollView, Alert, ToastAndroid,
+Platform } from 'react-native'
 import Icon from "react-native-vector-icons/Ionicons";
 import CheckBox from 'react-native-check-box'
-import * as axios from 'axios';
+import ValidationComponent from 'react-native-form-validator';
+import { widthPercentageToDP as WP, heightPercentageToDP as HP } from 'react-native-responsive-screen'
+import NetInfo from "@react-native-community/netinfo";
 
-export default class Signup extends Component {
+export default class Signup extends ValidationComponent {
 
     constructor(props){
         super(props);
@@ -13,21 +16,42 @@ export default class Signup extends Component {
             fullname: "",
             email: '',
             password: '',
-            canSubmit: null,
             submitting: false,
-            fullnameError: false,
-            emailError: false,
-            passwordError: false,
             passwordVisible: true,
+            error: false,
+            editable: true,
         };
     }
 
     componentDidMount() {
         this.setState({
             canSubmit: false,
+            fullname: "",
+            email: "",
+            Password: ""
         });
 
-       
+        let unsubscribe = NetInfo.addEventListener(state => {
+            if(state.isInternetReachable) {
+               if(Platform.OS == "android"){
+                ToastAndroid.showWithGravity("There is no internet connection", ToastAndroid.LONG, ToastAndroid.BOTTOM);
+               } else {
+                   Alert.alert("There is no internet connection");
+               }
+            }
+        });
+
+
+        unsubscribe();
+    }
+
+    componentWillUnmount() {
+        this.setState({
+            canSubmit: false,
+            fullname: "",
+            email: "",
+            Password: ""
+        });
     }
 
     updateEmail(e) {
@@ -54,69 +78,134 @@ export default class Signup extends Component {
         }));
     }
 
-    _submit = () => {
-        fetch("http://localhost:3000")
-        .then((res) => console.log(res))
-        .catch((error) => console.log(error))
-       // validate full name
-       let Firstname;
-       let Lastname;
-       let error = false;
-
-       if (this.state.fullname === "") {
-            this.setState({
-                fullnameError: true,
-            });
-            error = true;
-       } else {
+    goToLogin(){
         this.setState({
-            fullnameError: false,
+            canSubmit: false,
+            fullname: "",
+            email: "",
+            Password: ""
         });
-           let nameSplit = this.state.fullname.split(" ");
-            Firstname = nameSplit[0];
-            Lastname = nameSplit[1];
-            error = false;
+        this.props.navigation.navigate("Login");
+    }
+
+    async makeRequest(body){
+       try {
+           let result = await  fetch("https://api.vent.ly/api/v1/auth/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body),
+        })
+        switch(result.status) {
+            case 201: {
+                this.setState({
+                    submitting: false,
+                });
+                this.props.navigation.navigate("Emailverify", { email: this.state.email });
+                break;
+                
+            }
+            case 400: {
+                this.setState({
+                    submitting: false,
+                    editable: true
+                });
+                Alert.alert(`The email ${this.state.email} has already been registered`,
+                "Please try to log in to your account or reset your password",
+                [
+                    {text: 'Login', onPress: () => this.props.navigation.navigate("Login")},
+                    {
+                      text: 'Reset Password',
+                      onPress: () => this.props.navigation.navigate("resetpassword"),
+                      style: 'cancel',
+                    },
+                    {text: 'Use Another Email', onPress: () => { this.setState({ email: ''})}},
+                  ],
+                  {cancelable: false});
+                break;
+            }
+            case 500: {
+                this.setState({
+                    submitting: false,
+                    editable: true,
+                });
+                Alert.alert("An error occured on our end",
+                        "please try again");
+                break;
+            }
+        }
+
+       } catch (error) {
+        this.setState({
+            submitting: false,
+        });
+        this.setState({
+            editable: true,
+        });
+           Alert.alert("There is no internet connection",
+                    "Please connect to the internet and try again");
        }
+    }
 
-       if (this.state.email === "") {
-           this.setState({
-               emailError: true,
-           });
-           error = true;
-       } else if (this.state.email.length > 3) {
-            // validate the email
-            let regex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-            let emailPass = regex.test(this.state.email)
-           if (!emailPass) {
-               this.setState((state, props) => ({
-                   emailError: !state.emailError
-               }));
-               error = true;
-           } else {
-               error = false;
-               return null;
-           }
-       }
+    _submit = () => {
 
-       if (this.state.password.length < 8) {
-           this.setState((state, props) => ({
-               passwordError: !state.passwordError
-           }));
-           error = true;
-       } else {
-           error = false;
-       }
+        let unsubscribe = NetInfo.addEventListener(state => {
+            if(!state.isInternetReachable) {
+               if(Platform.OS === "android"){
+                ToastAndroid.showWithGravity("There is no internet connection", ToastAndroid.LONG, ToastAndroid.BOTTOM);
+               } else {
+                   Alert.alert("There is no internet connection");
+               }
+            } else {
 
+                this.setState({
+                    submitting: true,
+                    editable: false,
+                });
+        
+                this.validate({
+                    fullname: {required: true, string: true},
+                    email: { required: true, email: true},
+                    password: { required: true, string: true, minlength: 8}
+                });
+        
+                if(this.isFormValid()) {
+                    if(this.state.isChecked) {
+                        // split the firstname and lastname
+                        let nameArray = this.state.fullname.split(' ');
+                        let Firstname = nameArray[0];
+                        let Lastname = nameArray[1];
+                        let payload = {
+                            Firstname,
+                            Lastname,
+                            Email: this.state.email,
+                            Password: this.state.password
+                        };
+                        this.makeRequest(payload);
+        
+                    }else {
+                        this.setState({
+                            submitting: false,
+                        });
+                        this.setState({
+                            editable: true,
+                        });
+                        Alert.alert("You have to agree to our terms and conditions")
+                    }
+                }else {
+                    this.setState({
+                        submitting: false,
+                    });
+                    this.setState({
+                        editable: true,
+                    });
+                    Alert.alert("The form is not valid, check the fields")
+                }
 
-       if (error) {
-           return null;
-       } else {
-        axios.get("https://api.vent.ly/api/v1/event/interests")
-        .then((data) => console.log(data.data))
-        .catch((error) => console.log(error));
-       }
-
-
+            }
+        });
+        unsubscribe();
     }
 
     render() {
@@ -125,13 +214,13 @@ export default class Signup extends Component {
 
                     <View style={{paddingLeft: 20, paddingRight: 20 }}>
 
-                    <View style={{ flexDirection: "row", justifyContent: "center", marginTop: "15%"}}>
+                    <View style={{ flexDirection: "row", justifyContent: "center", marginTop: "8%"}}>
                         <Image source={require(
                         // @ts-ignore
-                        '../images/logo.png')} style={{ width: 50, height: 50}} resizeMode={"contain"} />
+                        '../images/logo.png')} style={{ width: WP("20%"), height: HP("6%")}} resizeMode={"contain"} />
                     </View>
 
-                    <View testID="texts" style={{ marginTop:"20%"}}>
+                    <View testID="texts" style={{ marginTop:"14%"}}>
                         <Text style={{ fontFamily: "Poppins-Medium.ttf", fontSize: 24}}>Get Started</Text>
                         <Text style={{ marginTop: 10}}>We're glad to have you aboard, signing up is easy</Text>
                     </View>
@@ -142,18 +231,18 @@ export default class Signup extends Component {
                             <Text>Full Name</Text>
                             <View style={{ flexDirection: "row", marginTop: 10}}>
                                 <Icon style={style.normalIcons} name="md-mail" color="#ABABAB" size={25}/>
-                                <TextInput style={style.input} onChangeText={(fullname) => { this.updateFullname(fullname)}}/>
+                                <TextInput editable={this.state.editable} style={style.input} onChangeText={(fullname) => { this.updateFullname(fullname)}}/>
                             </View>
-                            {this.state.fullnameError ? <Text style={{ color: "red"}}>This field is required</Text>: null}
+                            {this.isFieldInError('fullname') && this.getErrorsInField('fullname').map((errorMessage, index) => <Text key={index} style={style.errorText}>{errorMessage}</Text>) }
                         </View>
 
                         <View>
                             <Text style={{ marginTop: 20}}>Email</Text>
                             <View style={{ flexDirection: "row", marginTop: 10}}>
                                 <Icon style={style.normalIcons} name="md-mail" color="#ABABAB" size={25}/>
-                                <TextInput style={style.input} onChangeText={(email) => this.updateEmail(email)} />
+                                <TextInput editable={this.state.editable} style={style.input} onChangeText={(email) => this.updateEmail(email)} />
                             </View>
-                            {this.state.emailError ? <Text style={{ color: "red"}}>Invalid Email</Text> : null}
+                            {this.isFieldInError('email') && this.getErrorsInField('email').map((errorMessage, index) => <Text key={index} style={style.errorText}>{errorMessage}</Text>) }
                         </View>
 
                         <View>
@@ -161,17 +250,17 @@ export default class Signup extends Component {
                             <View style={{ flexDirection: "row", marginTop: 10}}>
                                 <Icon style={style.normalIcons} name="md-lock" color="#ABABAB" size={25}/>
 
-                                <TextInput secureTextEntry={this.state.passwordVisible} style={style.input}  />
+                                <TextInput editable={this.state.editable} onChangeText={(password) => this.password(password)} secureTextEntry={this.state.passwordVisible} style={style.input}  />
 
                                 {this.state.passwordVisible ? <Icon onPress={() => this.togglePasswordVisibilty() } style={style.eyeIocn} name="md-eye" color="#ABABAB" size={25}/> : <Icon onPress={() => this.togglePasswordVisibilty() } style={style.eyeIocn} name="md-eye-off" color="#ABABAB" size={25}/>}
                             </View>
-                            {this.state.passwordError ? <Text style={{ color: "red"}}>Invalid password. minimium length 8</Text> : null}
+                            {this.isFieldInError('password') && this.getErrorsInField('password').map((errorMessage, index) => <Text key={index} style={style.errorText}>{errorMessage}</Text>) }
                         </View>
                     
 
                     </View>
 
-                    <View style={{ flexDirection: "row", marginTop: 30, flexWrap: "wrap"}}>
+                    <View style={{ flexDirection: "row", marginTop: 30, flexWrap: "nowrap"}}>
                         <CheckBox
                             checkedCheckBoxColor="#E61648"
                             style={{padding: 10, height: 10, marginTop: 10, marginLeft: -10}}
@@ -183,15 +272,16 @@ export default class Signup extends Component {
                             isChecked={this.state.isChecked}
                             leftText="checkbox"
                         />
-                        <View>
-                            <Text style={{ marginTop: 7}}>By signing up you agree with our </Text>
-                            <Text style={{ color: "#FF4471", marginTop: "1%", textDecorationLine:"underline", fontWeight: "bold"}}>Terms & Conditions</Text>
+                        <View style={{ flexDirection: "row", marginTop: 4, flex: 1}}>
+                            <Text style={{ marginTop: 7, flex: 1, lineHeight: 15, justifyContent: "space-between"}}>By signing up you agree with our 
+                                <Text style={{ color: "#FF4471", marginTop: "1%", textDecorationLine:"underline", fontWeight: "bold", paddingLeft: 20 }}>Terms & Conditions </Text>
+                            </Text>
                         </View>
                     </View>
 
                     <View style={{ marginTop: 40, height: 50}}>
-                        <TouchableHighlight onPress={() => this.props.navigation.navigate("Usernameselect")}  style={style.submitButton} >
-                            { this.state.submitting ? <ActivityIndicator /> : <Text style={{ color: "white"}}>Sign Up</Text> }
+                        <TouchableHighlight onPress={() => this._submit()}  style={style.submitButton} >
+                            { this.state.submitting ? <ActivityIndicator color="white" size={26} /> : <Text style={{ color: "white"}}>Sign Up</Text> }
                         </TouchableHighlight>
                     </View>
 
@@ -199,7 +289,7 @@ export default class Signup extends Component {
                         <Text style={{ textAlign:"center", marginTop: 10}} onPress={() => {}}>
                             Already have an account? 
                         </Text>
-                        <Text onPress={() => this.props.navigation.navigate("Login")} style={{ color: "#E61648", paddingLeft: 10, marginTop: 8, fontWeight: "bold"}}>Login</Text>
+                        <Text onPress={() => this.goToLogin()} style={{ color: "#E61648", paddingLeft: 10, marginTop: 10 }}>Login</Text>
                     </View>
 
                     </View>
@@ -240,7 +330,10 @@ const style = StyleSheet.create({
     normalIcons: {
         position: "absolute", 
         zIndex: 10, 
-        marginTop: 15, 
+        marginTop: 13, 
         marginLeft: 10
+    },
+    errorText: {
+        color: "red"
     }
 });

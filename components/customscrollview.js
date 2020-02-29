@@ -1,6 +1,7 @@
 import React, {useState} from 'react'
 // @ts-ignore
 import { Image, ScrollView, Text, View, Dimensions, StyleSheet } from 'react-native';
+import { widthPercentageToDP as WP, heightPercentageToDP as HP } from 'react-native-responsive-screen'
 import ViewPager from '@react-native-community/viewpager';
 
 const screenWidth = Dimensions.get("screen").width;
@@ -19,14 +20,14 @@ export default function Customscrollview() {
         setActivePostion(e['nativeEvent'].position);
     }
     return (
-        <View style={{ width: Dimensions.get('window').width }}>
-            <ViewPager initialPage={0} style={{ backgroundColor: "white", width: screenWidth, height: 400, marginTop: 10}}onPageSelected={(e) => updateActive(e)}>
+        <View style={{ width: Dimensions.get('window').width, paddingTop: "1%" }}>
+            <ViewPager initialPage={0} style={{ backgroundColor: "white", width: screenWidth, height: HP('48%'), marginTop: 10}}onPageSelected={(e) => updateActive(e)}>
 
                 <View style={{ alignItems: "center"}}>
                     <View>
                         <Image source={require(
 // @ts-ignore
-                        "../images/1.png")} resizeMode={"contain"} style={{ width: 180, height: 390}}/>
+                        "../images/1.png")} resizeMode={"contain"} style={{ width: 180, height: HP('45%') }}/>
                     </View>
                 </View>
 
@@ -35,7 +36,7 @@ export default function Customscrollview() {
                     <View>
                         <Image source={require(
 // @ts-ignore
-                        "../images/2.png")} resizeMode={"contain"} style={{ width: 180, height: 390}}/>
+                        "../images/2.png")} resizeMode={"contain"} style={{ width: 180, height: HP('45%') }}/>
                     </View>
                 </View>
 
@@ -43,7 +44,7 @@ export default function Customscrollview() {
                     <View>
                         <Image source={require(
 // @ts-ignore
-                        "../images/3.png")} resizeMode={"contain"} style={{ width: 180, height: 390}}/>
+                        "../images/3.png")} resizeMode={"contain"} style={{ width: 180, height: HP('45%') }}/>
                     </View>
                 </View>
 
@@ -51,7 +52,7 @@ export default function Customscrollview() {
                     <View>
                         <Image source={require(
 // @ts-ignore
-                        "../images/4.png")} resizeMode={"contain"} style={{ width: 200, height: 390}}/>
+                        "../images/4.png")} resizeMode={"contain"} style={{ width: 180, height: HP('45%') }}/>
                     </View>
                 </View>
 

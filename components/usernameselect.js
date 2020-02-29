@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
-import { View, Text, Image, StyleSheet, ScrollView, Picker, TextInput, TouchableHighlight, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, Picker, TextInput, TouchableHighlight, ActivityIndicator, BackHandler, ToastAndroid } from 'react-native';
 import Icon from "react-native-vector-icons/Ionicons";
+import ImagePicker from 'react-native-image-picker';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 
 export default class Usernameselect extends Component {
@@ -9,7 +11,11 @@ export default class Usernameselect extends Component {
         this.state = {
             accountType: "Personal",
             image: "",
+            imageSelected: false,
+            dp: "",
+            username: "",
         }
+        this._handlebackbuttonpressed.bind(this)
 
         this.personaltext = <Text>Use this account type if you would just be using Vent.ly for personal use. You can always switch accounts later</Text>
 
@@ -21,11 +27,34 @@ export default class Usernameselect extends Component {
               skipBackup: true,
               path: 'images',
             },
-          };
+         };
     }
 
-    onImagePickerClicked = (res) => {
-       console.log(res['uri'])
+    componentDidMount(){
+        BackHandler.addEventListener("hardwareBackPress", () => this._handlebackbuttonpressed())
+    }
+
+    _handlebackbuttonpressed() {
+        ToastAndroid.showWithGravity("Please complete your registration", ToastAndroid.LONG,  ToastAndroid.BOTTOM);
+        return true;
+    }
+
+    onImagePickerClicked = () => {
+       ImagePicker.showImagePicker(this.options, (response) => {
+           console.log(response)
+            if(response.didCancel){
+                ToastAndroid.showWithGravity("Cancelled", ToastAndroid.LONG,  ToastAndroid.BOTTOM);
+            }
+            else if(response.error){
+                ToastAndroid.showWithGravity("An error occured, please try again", ToastAndroid.LONG,  ToastAndroid.BOTTOM);
+            } else {
+                let source = { uri: 'data:image/jpeg;base64,' + response.data };
+                this.setState({
+                    image: source,
+                    imageSelected: true,
+                })
+            }
+       });
     }
 
     render() {
@@ -42,9 +71,16 @@ export default class Usernameselect extends Component {
                <Text style={style.normalText}>Let's finish setting up your account</Text>
 
                <View style={style.ImagePickerContainer}>
-                   <TouchableHighlight onPress={() => console.log("Hello")} style={style.imagePicker} >
-                       <Icon name="md-camera" color="white" size={24} />
-                   </TouchableHighlight>
+                  {
+                      !this.state.imageSelected?
+                      <TouchableHighlight onPress={() => this.onImagePickerClicked()} style={style.imagePicker} >
+                        <Icon name="md-camera" color="white" size={24} />
+                      </TouchableHighlight>
+                      :
+                      <TouchableWithoutFeedback style={style.imagePicker} onPress={() => this.onImagePickerClicked()}>
+                          <Image resizeMode="cover" style={{ width: 100, height: 100, borderRadius: 50}} source={{ uri: this.state.image['uri']}} />
+                      </TouchableWithoutFeedback>
+                  }
                </View>
 
                <View>

@@ -1,7 +1,25 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableHighlight, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableHighlight, ActivityIndicator, BackHandler, Alert } from 'react-native';
+import io from 'socket.io-client';
 
 export default class Emailverification extends React.Component {
+
+    constructor(props){
+        super(props);
+        this.state = {}
+        this.socket = io("https://api.vent.ly");
+    }
+
+    componentDidMount() {
+        this.socket.on(`Activated${this.props.route.params.email}`, () => {
+            this.props.navigation.navigate("Usernameselect")
+        });
+        console.log(this.props.route.params.email)
+        // BackHandler.addEventListener('hardwareBackPress', function() {
+        //     Alert.alert("Cannot go back")
+        //     return false;
+        //   });
+    }
    
 
     render() {
@@ -17,7 +35,7 @@ export default class Emailverification extends React.Component {
                 </View>
 
                 <Text style={style.headerText}>Activate Your Account</Text>
-                <Text style={style.normalText}>We just sent an email to michaelajah@gmail.com with a link to activate your account. Check your inbox or apam folder</Text>
+                <Text style={style.normalText}>We just sent an email to {this.props.route.params.email} with a link to activate your account. Check your inbox or spam folder, please Don't close the app</Text>
 
                <View style={{ height: 50, marginTop: 90}}>
                     <TouchableHighlight onPress={() => this.props.navigation.navigate("Emailverify")}  style={style.submitButton} >
@@ -26,7 +44,7 @@ export default class Emailverification extends React.Component {
                </View>
 
                <View style={{ height: 50, marginTop: 10}}>
-                    <TouchableHighlight onPress={() => this.props.navigation.navigate("dashboard")}  style={style.borderButton} >
+                    <TouchableHighlight onPress={() => this.props.navigation.navigate("Signup")}  style={style.borderButton} >
                         <Text style={{ color: "#E61648" }}>Use Another Email Address</Text> 
                     </TouchableHighlight>
                </View>

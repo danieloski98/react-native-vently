@@ -28,7 +28,7 @@ const Home = ({navigation}) => {
             <View style={style.logoContainer}>
               <Image source={require(
     // @ts-ignore
-              '../images/logo.png')} style={style.logoImage} resizeMode={"contain"} />
+              '../images/icons/logo.png')} style={style.logoImage} resizeMode={"contain"} />
               <Text style={style.logoText}>Vently</Text>
             </View>
 

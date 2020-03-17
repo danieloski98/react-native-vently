@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "168560685354",
+    "firebase_url": "https://e-commerce-site-19c7a.firebaseio.com",
+    "project_id": "e-commerce-site-19c7a",
+    "storage_bucket": "e-commerce-site-19c7a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:168560685354:android:419f078cf5cdd97d8c2e53",
+        "android_client_info": {
+          "package_name": "com.vently"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "168560685354-0qd5duoa19qtmhg9jr74tsbf34fa38rf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVAxot6ppdMbRfMMHIsf8EO9qLrTkNJXU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "168560685354-0qd5duoa19qtmhg9jr74tsbf34fa38rf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

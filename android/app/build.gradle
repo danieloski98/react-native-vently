@@ -144,18 +144,25 @@ android {
     }
     signingConfigs {
         debug {
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
+            storeFile file('my-upload-key.keystore')
+            storePassword 'daniel98'
+            keyAlias 'my-key-alias'
+            keyPassword 'daniel98'
         }
 
         release {
-        storeFile file(MYAPP_RELEASE_STORE_FILE)
-        storePassword MYAPP_RELEASE_STORE_PASSWORD
-        keyAlias MYAPP_RELEASE_KEY_ALIAS
-        keyPassword MYAPP_RELEASE_KEY_PASSWORD
+        storeFile file('my-upload-key.keystore')
+        storePassword 'daniel98'
+        keyAlias 'my-key-alias'
+        keyPassword 'daniel98'
         }
+
+        // release {
+        // storeFile file(MYAPP_RELEASE_STORE_FILE)
+        // storePassword MYAPP_RELEASE_STORE_PASSWORD
+        // keyAlias MYAPP_RELEASE_KEY_ALIAS
+        // keyPassword MYAPP_RELEASE_KEY_PASSWORD
+        // }
     }
     buildTypes {
         debug {
@@ -186,6 +193,7 @@ android {
 }
 
 dependencies {
+    implementation project(':@react-native-community_async-storage')
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "com.facebook.react:react-native:+"  // From node_modules
     implementation 'androidx.appcompat:appcompat:1.1.0-rc01'
@@ -208,3 +216,4 @@ task copyDownloadableDepsToLibs(type: Copy) {
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
+apply plugin: 'com.google.gms.google-services'

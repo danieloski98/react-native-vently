@@ -61,20 +61,30 @@ export default class Login extends ValidationComponent {
             body: JSON.stringify(payload),
         });
 
+        console.log(response.status);
+        console.log(await response.json())
+
         switch(response.status) {
             case 200: {
-                console.log("Making requesttttsssghg");
+                console.log("Made request");
                 let body = await response.json();
                 console.log(body);
                 this.setState({
                     submitting: false
                 });
-                this.props.navigation.navigate("Dashboard");
+                this.props.navigation.navigate("dashboard");
                 break;
             }
+            case 404: {
+                this.setState({
+                    submitting: false
+                });
+                Alert.alert("There is no account with that Email")
+            }
             case 500: {
-                console.log("errort");
-
+                let res = response.json();
+                console.log(res);
+                console.log("error");
                 this.setState({
                     submitting: false
                 });
@@ -83,7 +93,10 @@ export default class Login extends ValidationComponent {
         }
 
       } catch (error) {
-        Alert.alert("Network slow")
+        this.setState({
+            submitting: false
+        });
+        Alert.alert("Network Error", "There is no internet connection")
       }
     }
 
@@ -104,7 +117,7 @@ export default class Login extends ValidationComponent {
             });
             Alert.alert("Please fill the form correctly")
         }else {
-            
+
             this.makeRequest();
         }
     }
